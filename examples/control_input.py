@@ -78,5 +78,5 @@ if len(action.failed_stuff) > 0:
 	print "CRITICAL -", action.get_failed_stuff_as_string()
 	exit(2)
 
-print "OK - action %s on input %s succeded"
+print "OK - action %s on input %s succeded" % (command, id)
 exit(0)
