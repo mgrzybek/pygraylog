@@ -6,7 +6,7 @@
 
 import sys, json, requests
 
-from pygraylog.api import MetaAPI
+from pygraylog.api import MetaObjectAPI
 
 class Stream(MetaObjectAPI):
 
