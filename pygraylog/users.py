@@ -6,25 +6,10 @@
 
 import sys, json, requests
 
-from graylog.api import MetaAPI
+from pygraylog.api import MetaObjectAPI
 
 ## This class is used to manage the users.
-class User(MetaAPI):
-	
-	## The contructor of the class.
-	# @param hostname the remote API host
-	# @param port the port number
-	# @param login the username allowed to connect
-	# @param password the user's password
-	def __init__(self, hostname, port, login, password):
-		super(User, self).__init__(hostname,port,login,password)
-
-		self._data = {}
-		self._response = {}
-
-		self.error_msg = ""
-
-		self._url = "http://%s:%i" % (hostname, port)
+class User(MetaObjectAPI):
 
 	## Creates a user using the given dict.
 	# @param user_details a dict with five required keys (username, full_name, email, password, permissions).
@@ -41,21 +26,7 @@ class User(MetaAPI):
 			self.error_msg = "Some parameters are missing, required: username, full_name, email, password, permissions."
 			raise ValueError
 
-		_url = "%s/%s" % (self._url, "users")
-
-		r = requests.post(_url, json.dumps(user_details), auth=(self._login, self._password), headers={'Content-Type': 'application/json'})
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
-		
-		if r.status_code == 201:
-			self._data = user_details
-			return True
-
-		self._response = r.json()
-
-		return False
+		return super(User, self).create("users", user_details)
 
 	## Removes a previously loaded user from the server.
 	# The key 'username' from self._data is used.
@@ -68,44 +39,15 @@ class User(MetaAPI):
 			self.error_msg = "The object is empty: no username available."
 			raise ValueError
 
-		_url = "%s/%s/%s" % (self._url, "users", self._data['username'])
-
-		r = requests.delete(_url, auth=(self._login, self._password))
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
-
-		if r.status_code == 204:
-			self._data.clear()
-			return True
-
-		self._response = r.json()
-
-		return False
+		return super(User, self).delete("users", self._data['username'])
 
 	## Tells if a username exists in the server's database.
 	# @param username the user to find
 	# @throw ValueError the given username is empty
 	# @throw IOError HTTP code >= 500
 	# @return True if found
-	def find_by_username(self, username):
-		if len(username) == 0:
-			self.error_msg = "given username is too short."
-			raise ValueError
-		_url = "%s/%s/%s" % (self._url, "users", username)
-
-		r = requests.get(_url, auth=(self._login, self._password))
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
-
-		if r.status_code == 404:
-			self._response = r.json()
-			return False
-
-		return True
+	def find_by_id(self, username):
+		return super(User, self).find_by_id("users", username)
 
 	## Loads a username from the server's database.
 	# @param username the user to find
@@ -113,24 +55,7 @@ class User(MetaAPI):
 	# @throw IOError HTTP code >= 500
 	# @return True if found and loaded
 	def load_from_server(self, username):
-		if len(username) == 0:
-			self.error_msg = "given username is too short."
-			raise ValueError
-
-		_url = "%s/%s/%s" % (self._url, "users", username)
-
-		r = requests.get(_url, auth=(self._login, self._password))
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
-
-		if r.status_code == 404:
-			self._response = r.json()
-			return False
-
-		self._data = r.json()
-		return True
+		return super(User, self).load_from_server("users", self._data['username'])
 
 	## Flushes the user's permissions from the server's database.
 	# @throw ValueError the object's data are empty
@@ -150,7 +75,7 @@ class User(MetaAPI):
 			raise IOError
 
 		if r.status_code == 204:
-			self._data.clear()
+			self._data['permissions'].clear()
 			return True
 
 		self._response = r.json()
