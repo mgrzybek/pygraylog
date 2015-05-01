@@ -53,7 +53,7 @@ class Stream(MetaObjectAPI):
 	# @throw ValueError the given stream is empty
 	# @throw IOError HTTP code >= 500
 	# @return the id is found or None
-	def find_by_id(self, title):
+	def find_by_title(self, title):
 		if len(title) == 0:
 			self.error_msg = "given title is too short."
 			raise ValueError
