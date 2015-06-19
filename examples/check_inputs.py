@@ -57,7 +57,7 @@ check = InputCheck(hostname, port, user, password)
 try:
 	check.perform()
 except:
-	print "UNKOWN - failed to retrieve data: %s" % ( check.error_msg )
+	print "UNKOWN - failed to retrieve data"
 	exit(3)
 
 if len(check.failed_stuff) > 0:

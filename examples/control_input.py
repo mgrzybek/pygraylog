@@ -3,7 +3,7 @@
 import sys, getopt
 
 sys.path.append('/usr/local/nagios/share')
-from pygraylog.api import InputControl
+from pygraylog.control import InputControl
 
 hostname = ""
 user = ""
