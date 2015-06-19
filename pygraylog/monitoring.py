@@ -7,13 +7,13 @@
 import sys, json, requests
 
 from abc import ABCMeta, abstractmethod
-from pygraylog.api import MetaAPI
+from pygraylog.api import MetaRootAPI
 
 ## A metaclass used to create the monitoring classes.
 #
 # Only one method needs to be overwritten by the children classes.
 #
-class MetaCheck(MetaAPI):
+class MetaCheck(MetaRootAPI):
 	__metaclass__ = ABCMeta
 	
 	## This is the abstract constructor.

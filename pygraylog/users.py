@@ -26,7 +26,9 @@ class User(MetaObjectAPI):
 			self.error_msg = "Some parameters are missing, required: username, full_name, email, password, permissions."
 			raise ValueError
 
-		return super(User, self).create("users", user_details)
+		self._validation_schema =  super(User, self)._get_validation_schema("users")['models']['User']
+
+		return super(User, self)._create("users", user_details)
 
 	## Removes a previously loaded user from the server.
 	# The key 'username' from self._data is used.
@@ -39,7 +41,7 @@ class User(MetaObjectAPI):
 			self.error_msg = "The object is empty: no username available."
 			raise ValueError
 
-		return super(User, self).delete("users", self._data['username'])
+		return super(User, self)._delete("users", self._data['username'])
 
 	## Tells if a username exists in the server's database.
 	# @param username the user to find
@@ -55,7 +57,7 @@ class User(MetaObjectAPI):
 	# @throw IOError HTTP code >= 500
 	# @return True if found and loaded
 	def load_from_server(self, username):
-		return super(User, self).load_from_server("users", self._data['username'])
+		return super(User, self)._load_from_server("users", username)
 
 	## Flushes the user's permissions from the server's database.
 	# @throw ValueError the object's data are empty
@@ -88,19 +90,20 @@ class User(MetaObjectAPI):
 	# @throw IOError HTTP code >= 500
 	# @return True if found and loaded
 	def set_permissions(self, permissions):
-		if type(permissions) is not dict:
-			self.error_msg = "given permissions must be a dict."
+		if type(permissions) is not list:
+			self.error_msg = "given permissions must be a list."
 			raise TypeError
 
-		_url = "%s/%s/%s/%s" % (self._url, "users", username, "permissions")
+		_url = "%s/%s/%s/%s" % (self._url, "users", self._data['username'], "permissions")
 
-		r = requests.post(_url, json.dumps(user_details), auth=(self._login, self._password), headers={'Content-Type': 'application/json'})
+		r = requests.put(_url, json.dumps(permissions), auth=(self._login, self._password), headers={'Content-Type': 'application/json'})
 
 		if r.status_code >= 500:
 			self.error_msg = r.text
 			raise IOError
 
-		if r.status_code == 201:
+		if r.status_code == 204:
+			self._data['permissions'] = permissions
 			return True
 
 		self._response = r.json()
@@ -116,3 +119,16 @@ class User(MetaObjectAPI):
 			raise ValueError
 
 		return self._data['permissions']
+
+	def backup(self):
+		if self._data == None or 'username' not in self._data:
+			self.error_msg = "The object is empty: no username available."
+			raise ValueError
+
+		return self._backup2("users", id)
+
+	#def backup(self, id):
+		#return self._backup2("users", id)
+	
+	def backup_all(self):
+		return self._backup1("users")
