@@ -21,12 +21,12 @@ class User(MetaObjectAPI):
 		if type(user_details) is not dict:
 			self.error_msg = "given user_details must be a dict."
 			raise TypeError
-		
+
 		if 'username' not in user_details or 'full_name' not in user_details or 'email' not in user_details or 'password' not in user_details or 'permissions' not in user_details:
 			self.error_msg = "Some parameters are missing, required: username, full_name, email, password, permissions."
 			raise ValueError
 
-		self._validation_schema =  super(User, self)._get_validation_schema("users")['models']['User']
+		self._validation_schema =  super(User, self)._get_validation_schema("users")['models']['ChangeUserRequest']
 
 		return super(User, self)._create("users", user_details)
 
@@ -129,6 +129,6 @@ class User(MetaObjectAPI):
 
 	#def backup(self, id):
 		#return self._backup2("users", id)
-	
+
 	def backup_all(self):
 		return self._backup1("users")
