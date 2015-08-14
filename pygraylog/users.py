@@ -26,7 +26,7 @@ class User(MetaObjectAPI):
 			self.error_msg = "Some parameters are missing, required: username, full_name, email, password, permissions."
 			raise ValueError
 
-		self._validation_schema =  super(User, self)._get_validation_schema("users")['models']['ChangeUserRequest']
+		self._validation_schema =  super(User, self)._get_validation_schema("users")['models']['UserSummary']
 
 		return super(User, self)._create("users", user_details)
 
@@ -131,4 +131,4 @@ class User(MetaObjectAPI):
 		#return self._backup2("users", id)
 
 	def backup_all(self):
-		return self._backup1("users")
+		return self._backup1("users")["users"]

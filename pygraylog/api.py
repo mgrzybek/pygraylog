@@ -98,12 +98,9 @@ class MetaObjectAPI(MetaRootAPI):
 			self.error_msg = r.text
 			raise ValueError
 
+		# TODO: get the id from the child object, "object + _id" does no longer work with users
 		if r.status_code == 201:
-			key = "%s_id" % ( re.sub('s$', '', object_name ) )
-
 			self._data = details
-			self._data['id'] = r.json()[key]
-
 			return True
 
 		self._response = r.json()
