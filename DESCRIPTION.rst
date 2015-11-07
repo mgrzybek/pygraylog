@@ -18,17 +18,16 @@ For instance this is not a production-ready release.
 
 Usage
 -----
-'''
+<pre>
 from pygraylog.control import InputControl, StreamControl
 
 input = InputControl('localhost', 12900, 'my user', 'my pass', '5229296d808e9f943f848cf42e377fb1', 'launch')
 
 try:
   if not input.perform():
-    printf "Action failed %s", input.failed_stuff
+    print "Action failed %s", input.failed_stuff
   else:
     print "Action completed"
 except:
-  printf "API exception: %s", input.error_msg
-
-'''
+  print "API exception: %s", input.error_msg
+</pre>
