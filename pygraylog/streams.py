@@ -41,7 +41,7 @@ class Stream(MetaObjectAPI):
 			self.error_msg = "The object is empty: no id available."
 			raise ValueError
 
-		return super(Stream, self).delete("streams", self._data['id'])
+		return super(Stream, self)._delete("streams", self._data['id'])
 
 	## Tells if a stream exists in the server's database.
 	# @param id the stream to find
