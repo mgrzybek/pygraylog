@@ -4,7 +4,7 @@
 # This package is used to monitor a Graylog instance using its remote API thanks to pycurl.
 #
 
-import sys, json, requests
+import sys, json, requests, StringIO
 
 from abc import ABCMeta, abstractmethod
 from pygraylog.api import MetaRootAPI

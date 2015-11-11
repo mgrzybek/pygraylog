@@ -6,7 +6,7 @@ sys.path.append('/usr/local/nagios/share')
 from pygraylog.monitoring import StreamCheck
 
 hostname = ""
-login = ""
+user = ""
 password = ""
 port = 0
 
@@ -52,7 +52,7 @@ if len(hostname) == 0:
 
 #############
 
-check = StreamCheck(hostname, port, login, password)
+check = StreamCheck(hostname, port, user, password)
 
 try:
 	check.perform()
@@ -66,4 +66,3 @@ if len(check.failed_stuff) > 0:
 
 print "OK - all streams processing"
 exit(0)
-

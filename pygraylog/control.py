@@ -18,13 +18,6 @@ class MetaControl(MetaAPI):
 
 	## This is the abstract constructor.
 	# Each child class needs to implement it to add the allowed commands.
-	# @param hostname the remote host or IP address of the server
-	# @param port the remote TCP port to use
-	# @param login the authentication data
-	# @param password the password
-	# @param url the keyword used to specify the type of object
-	# @param id the identifier of the object to control
-	# @command the keyword of the action to perform
 	@abstractmethod
 	def __init__(self, hostname, port, login, password, url, id, command):
 		super(MetaControl, self).__init__(hostname, port, login, password)
@@ -35,10 +28,7 @@ class MetaControl(MetaAPI):
 
 		self._url = "http://%s:%i/%s/%s/%s" % (hostname, port, url, id, command)
 
-	## Performs the POST calls using requests.
-	# @throw Error the given command has not been recognized
-	# @throw IOError bad return code from the server (HTTP >= 500)
-	# @return True if succeded
+	## Performs the POST calls using requests
 	def perform(self):
 		if self.check_command() == False:
 			self.error_msg = "Bad keyword, should be: %s" % (self._allowed_commands)
@@ -58,8 +48,6 @@ class MetaControl(MetaAPI):
 		return True
 
 	## Verifies if the given command is allowed by the class.
-	# @throw Error the given command has not been recognized
-	# @return True if recognized
 	def check_command(self):
 		try:
 			self._allowed_commands.index(self.command)
@@ -74,7 +62,7 @@ class MetaControl(MetaAPI):
 			self._allowed_commands.index(keyword)
 		except:
 			self._allowed_commands.append(keyword)
-
+			
 		return True
 
 	## Joins the list using ',' to return a string.
