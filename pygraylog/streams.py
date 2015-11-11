@@ -43,6 +43,23 @@ class Stream(MetaObjectAPI):
 
 		return super(Stream, self)._delete("streams", self._data['id'])
 
+	## Updates a stream using the given dict.
+	# @param stream_details a dict with the keys to update.
+	# @throw TypeError the given variable is not a dict
+	# @throw ValueError some required keys are missing in the given stream_details dict
+	# @throw IOError HTTP code >= 500
+	# @return True if succeded
+	def update(self, stream_details):
+		if type(stream_details) is not dict:
+			print stream_details
+			self.error_msg = "given stream_details must be a dict."
+			raise TypeError
+
+		if 'id' in stream_details.keys():
+			del stream_details['id']
+
+		return super(Stream, self)._update("streams", self._data['id'], stream_details)
+
 	## Tells if a stream exists in the server's database.
 	# @param id the stream to find
 	# @throw ValueError the given stream is empty
