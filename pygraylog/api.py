@@ -14,21 +14,26 @@ class MetaRootAPI:
 
 	## This is the abstract constructor.
 	@abstractmethod
-	def __init__(self, hostname, port, login, password):
-		self.error_msg = ""
+	def __init__(self, server):
+		if server == None:
+			self.error_msg = "bad server given"
+			raise ValueError
 
-		self._hostname = hostname
-		self._login = login
-		self._password = password
-		self._url = ""
+		self._server = server
+		self.error_msg = ""
+		self._data = None
+
+	def _handle_request_status_code(self, r):
+		if r.status_code >= 500:
+			self.error_msg = r.text
+			raise IOError
+
+		if r.status_code >= 400:
+			self.error_msg = r.text
+			raise ValueError
 
 class MetaAdminAPI(MetaRootAPI):
 	__metaclass__ = ABCMeta
-
-	## This is the abstract constructor.
-	@abstractmethod
-	def __init__(self, hostname, port, login, password):
-		super(MetaAdminAPI, self).__init__(hostname, port, login, password)
 
 	@abstractmethod
 	def perform(): pass
@@ -37,12 +42,10 @@ class MetaObjectAPI(MetaRootAPI):
 	__metaclass__ = ABCMeta
 
 	## This is the main constructor of the class
-	def __init__(self, hostname, port, login, password):
-		super(MetaObjectAPI, self).__init__(hostname, port, login, password)
+	def __init__(self, server):
+		super(MetaObjectAPI, self).__init__(server)
 
-		self._data = {}
 		self._response = {}
-		self._url = "http://%s:%i" % (hostname, port)
 
 		self._validation_schema = {}
 		self.error_msg = ""
@@ -52,9 +55,9 @@ class MetaObjectAPI(MetaRootAPI):
 	# @throw IOError HTTP code >= 500
 	# @return the schema or None
 	def _get_validation_schema(self, object_name):
-		_url = "%s/api-docs/%s" % (self._url, object_name)
+		_url = "%s/api-docs/%s" % (self._server.url, object_name)
 
-		r = requests.get(_url, auth=(self._login, self._password))
+		r = self._server.session.get(_url)
 
 		if r.status_code >= 500:
 			self.error_msg = r.text
@@ -84,24 +87,18 @@ class MetaObjectAPI(MetaRootAPI):
 	# @throw IOError HTTP code >= 500
 	# @return True if succeded
 	def _create(self, object_name, details):
-		_url = "%s/%s" % (self._url, object_name)
+		_url = "%s/%s" % (self._server.url, object_name)
 
 		jsonschema.validate(json.dumps(details), self._validation_schema)
 
-		r = requests.post(_url, json.dumps(details), auth=(self._login, self._password), headers={'Content-Type': 'application/json'})
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
-
-		if r.status_code == 400:
-			self.error_msg = r.text
-			raise ValueError
+		r = self._server.session.post(_url, json.dumps(details), headers={'Content-Type': 'application/json'})
 
 		# TODO: get the id from the child object, "object + _id" does no longer work with users
 		if r.status_code == 201:
 			self._data = details
 			return True
+
+		self._handle_request_status_code(r)
 
 		self._response = r.json()
 
@@ -109,12 +106,11 @@ class MetaObjectAPI(MetaRootAPI):
 
 	## Removes a previously loaded object from the server.
 	# self._data is cleared on success.
-	# @param id the id to find (username, id...)
 	# @throw ValueError the given parameters are not valid
 	# @throw IOError HTTP code >= 500
 	# @return True if succeded
 	@abstractmethod
-	def delete(self, object_name, id):
+	def delete(self):
 		raise ValueError
 
 	## Removes a previously loaded object from the server.
@@ -133,17 +129,56 @@ class MetaObjectAPI(MetaRootAPI):
 			self.error_msg = "given id is too short."
 			raise ValueError
 
-		_url = "%s/%s/%s" % (self._url, object_name, id)
+		_url = "%s/%s/%s" % (self._server.url, object_name, id)
 
-		r = requests.delete(_url, auth=(self._login, self._password))
+		r = self._server.session.delete(_url)
+
+		self._handle_request_status_code(r)
+
+		if r.status_code == 204:
+			self._data.clear()
+			return True
+
+		self._response = r.json()
+
+		return False
+
+	## Updates a previously loaded object from the server.
+	# self._data is cleared on success.
+	# @throw ValueError the given parameters are not valid
+	# @throw IOError HTTP code >= 500
+	# @return True if succeded
+	@abstractmethod
+	def update(self):
+		raise ValueError
+
+	## Updates a previously loaded object from the server.
+	# self._data is cleared on success.
+	# @throw ValueError the given parameters are not valid
+	# @throw IOError HTTP code >= 500
+	# @return True if succeded
+	def _update(self, object_name, id, details):
+		_url = "%s/%s/%s" % (self._server.url, object_name, id)
+
+		jsonschema.validate(json.dumps(details), self._validation_schema)
+
+		r = self._server.session.put(_url, json.dumps(details), headers={'Content-Type': 'application/json'})
 
 		if r.status_code >= 500:
 			self.error_msg = r.text
 			raise IOError
 
+		if r.status_code == 400:
+			self.error_msg = r.text
+			raise ValueError
+
 		if r.status_code == 204:
-			self._data.clear()
-			return True
+			for k in details.keys():
+				print "%s - %s = %s" % ( k, details[k], self._data[k] )
+				if details[k] != self._data[k]:
+					self._load_from_server(object_name, id)
+					return True
+			return False
 
 		self._response = r.json()
 
@@ -165,17 +200,15 @@ class MetaObjectAPI(MetaRootAPI):
 			self.error_msg = "given id is too short."
 			raise ValueError
 
-		_url = "%s/%s/%s" % (self._url, object_name, id)
+		_url = "%s/%s/%s" % (self._server.url, object_name, id)
 
-		r = requests.get(_url, auth=(self._login, self._password))
-
-		if r.status_code >= 500:
-			self.error_msg = r.text
-			raise IOError
+		r = self._server.session.get(_url)
 
 		if r.status_code == 404:
 			self._response = r.json()
 			return False
+
+		self._handle_request_status_code(r)
 
 		return True
 
@@ -194,9 +227,9 @@ class MetaObjectAPI(MetaRootAPI):
 			self.error_msg = "given id is too short."
 			raise ValueError
 
-		_url = "%s/%s/%s" % (self._url, object_name, id)
+		_url = "%s/%s/%s" % (self._server.url, object_name, id)
 
-		r = requests.get(_url, auth=(self._login, self._password))
+		r = self._server.session.get(_url)
 
 		if r.status_code >= 500:
 			self.error_msg = r.text
@@ -207,6 +240,20 @@ class MetaObjectAPI(MetaRootAPI):
 			return False
 
 		self._data = r.json()
+		return True
+
+	## Loads an object from the given JSON object.
+	# @param details the data to load
+	# @throw ValueError the given parameters are not valid
+	# @return True if found and loaded
+	def load_from_json(self,details):
+		if len(details) == 0:
+			self.error_msg = "given details are too short."
+			raise ValueError
+
+		jsonschema.validate(json.dumps(details), self._validation_schema)
+
+		self._data = details
 		return True
 
 	## Exports the specified object from the server's database.
@@ -239,9 +286,9 @@ class MetaObjectAPI(MetaRootAPI):
 			self.error_msg = "given object_name is too short."
 			raise ValueError
 
-		_url = "%s/%s" % (self._url, object_name)
+		_url = "%s/%s" % (self._server.url, object_name)
 
-		r = requests.get(_url, auth=(self._login, self._password))
+		r = self._server.session.get(_url)
 
 		if r.status_code >= 500:
 			self.error_msg = r.text
@@ -253,9 +300,9 @@ class MetaObjectAPI(MetaRootAPI):
 
 		return r.json()
 
-	@abstractmethod
-	def backup(self):
-		raise ValueError
+#	@abstractmethod
+#	def backup(self):
+#		raise ValueError
 
 ## A class used to backup and restore the content of Graylog's database
 class Backup(MetaRootAPI):
@@ -299,7 +346,7 @@ class Backup(MetaRootAPI):
 
 	## Exports streams
 	def backup_streams():
-		return pygraylog.streams.Stream(self._hostname, self._port, self._login, self._password).backup()
+		print "TODO"
 
 	## Exports bundles
 	def backup_bundles():
@@ -323,4 +370,4 @@ class Backup(MetaRootAPI):
 
 	## Exports users
 	def backup_users():
-		return pygraylog.users.User(self._hostname, self._port, self._login, self._password).backup()
+		print "TODO"

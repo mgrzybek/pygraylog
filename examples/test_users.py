@@ -1,22 +1,31 @@
 #! /usr/bin/env python
 
+from pygraylog.server import Server
 from pygraylog.users import User
 
-john = User('dappsyslogapp1.pgs', 12900, 'dieux', 'admin')
+import json
 
-#if john.find_by_username('mathieu.grzybek') == True:
-	#print 'mathieu found'
+server = Server('localhost', 12900, False, False)
+server.auth_by_auth_basic('foo', 'bar')
 
-#if john.find_by_username('john') == True:
-	#print 'john found'
-#else:
-	#print 'john not found'
+users = server.get_users()
 
-user = { u'username' : u'john', u'full_name' : u'john doe', u'email' : 'john@doe.net', u'password' : u'doejohn', u'permissions' : [ u'*' ] }
+john = User(server)
+
+user = { u'username' : u'john', u'full_name' : u'john doe', u'email' : 'john@doe.org', u'password' : u'secret', u'permissions' : [  ] }
+
+print user
 
 if john.find_by_id('john') == True:
 	print 'john found'
-	john._data['username'] = 'john'
+	john.load_from_server('john')
+
+	if john.update({ 'full_name' : 'John DOE' }) == True:
+		print 'john updated'
+	else:
+		print 'john not updated'
+		print john_response
+
 	if john.delete() == True:
 		print 'john deleted'
 	else:
@@ -26,7 +35,6 @@ else:
 	print 'john not found'
 	if john.create(user) == True:
 		print 'john created'
-		print john._data
 	else:
 		print 'john failed'
 		print john._response
