@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ## @package pygraylog.dashboards
-# This package is manage Graylog dashboards using its remote API thanks to requests.
+# This package is used to manage Graylog dashboards using its remote API thanks to requests.
 #
 
 import sys, json, requests
@@ -20,7 +20,7 @@ class Dashboard(MetaObjectAPI):
 		if type(dashboard_details) is not dict:
 			self.error_msg = "given dashboard_details must be a dict."
 			raise TypeError
-		
+
 		if 'description' not in dashboard_details or 'title' not in dashboard_details:
 			self.error_msg = "Some parameters are missing, required: description, title."
 			raise ValueError
@@ -88,6 +88,6 @@ class Dashboard(MetaObjectAPI):
 
 	def backup(self, id):
 		return self._backup2("dashboards", id)
-	
+
 	def backup_all(self):
 		return self._backup1("dashboards")

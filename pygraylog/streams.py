@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ## @package pygraylog.streams
-# This package is manage Graylog streams using its remote API thanks to requests.
+# This package is used to manage Graylog streams using its remote API thanks to requests.
 #
 
 import sys, json, requests
