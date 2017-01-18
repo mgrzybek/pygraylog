@@ -5,8 +5,8 @@ from pygraylog.users import User
 
 import json
 
-server = Server('localhost', 12900, False, False)
-server.auth_by_auth_basic('foo', 'bar')
+server = Server('dappmetlogapp1.pgs', 8080, False, False)
+server.auth_by_auth_basic('', '')
 
 users = server.get_users()
 
@@ -34,8 +34,7 @@ if john.find_by_id('john') == True:
 else:
 	print 'john not found'
 	if john.create(user) == True:
-		print 'john created'
+			print 'john created'
 	else:
 		print 'john failed'
 		print john._response
-
