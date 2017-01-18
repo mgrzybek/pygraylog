@@ -5,6 +5,7 @@
 #
 
 import sys, json, requests, StringIO
+import pygraylog.server
 
 from abc import ABCMeta, abstractmethod
 from pygraylog.api import MetaRootAPI
@@ -16,13 +17,25 @@ from pygraylog.api import MetaRootAPI
 class MetaCheck(MetaRootAPI):
 	__metaclass__ = ABCMeta
 
+	failed_stuff = []
+
 	## This is the abstract constructor.
 	# Each child class needs to implement it using the right parameters.
 	@abstractmethod
 	def __init__(self, hostname, port, login, password, url):
-		super(MetaCheck, self).__init__(hostname, port, login, password)
+		server = pygraylog.server.Server(hostname, port)
+		server.auth_by_auth_basic(login, password)
 
-		self.failed_stuff = []
+		super(MetaCheck, self).__init__(server)
+
+		if login == None or len(login) == 0:
+			self.error_msg = "bad login given"
+			raise ValueError
+
+		if password == None or len(password) == 0:
+			self.error_msg = "bad password given"
+			raise ValueError
+
 		self._url = "http://%s:%i/%s" % (hostname, port, url)
 
 	## Updates the failed_stuff list in case of error.
@@ -32,13 +45,13 @@ class MetaCheck(MetaRootAPI):
 
 	## Performs the GET calls using requestss
 	def perform(self):
-		r = requests.get(self._url, auth=(self._login, self._password))
+		r = self._server.session.get(self._url)
 
 		if r.status_code == 401:
 			self.error_msg = 'Not authorized (HTTP 401)'
 			raise IOError
 
-		self._process_json(r.json())
+		self._process_json(r.json)
 
 		if len(self.failed_stuff) > 0:
 			return False

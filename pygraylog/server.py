@@ -22,7 +22,7 @@ class Server:
 		else:
 			proto = 'http'
 
-		self.url = "%s://%s:%s" % ( proto, hostname, port )
+		self.url = "%s://%s:%s/api" % ( proto, hostname, port )
 
 		self.session = requests.Session()
 

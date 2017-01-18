@@ -28,7 +28,12 @@ class Stream(MetaObjectAPI):
 
 		self._validation_schema =  super(Stream, self)._get_validation_schema("streams")['models']['CreateStreamRequest']
 
-		return super(Stream, self)._create("streams", stream_details)
+		if super(Stream, self)._create("streams", stream_details) == True:
+			self._data['stream_id'] = self._response['stream_id']
+			self._data['id'] = self._response['stream_id']
+			return True
+
+		return False
 
 	## Removes a previously loaded stream from the server.
 	# The key 'id' from self._data is used.
@@ -104,12 +109,12 @@ class Stream(MetaObjectAPI):
 	# @throw ValueError the given stream is empty
 	# @throw IOError HTTP code != 200
 	# @return a list a rules
-	def get_rules():
+	def get_rules(self):
 		if self._data == None or 'id' not in self._data:
 			self.error_msg = "The object is empty: no id available."
 			raise ValueError
 
-		_url = "%s/%s/%s/%s" % (self._server.url, "streams", id, "rules")
+		_url = "%s/%s/%s/%s" % (self._server.url, "streams", self._data['id'], "rules")
 
 		r = self._server.session.get(_url)
 
@@ -195,7 +200,11 @@ class Rule(MetaObjectAPI):
 
 		_url = "%s/%s/%s/%s" % ( self._server.url, 'streams', self._stream._data['id'], 'rules')
 
-		r = self._server.session.post(_url)
+		r = self._server.session.post(_url, json=rule_details)
+		#	if super(Rule, self)._create("streams", stream_details) == True:
+		#		self._data['stream_id'] = self._response['stream_id']
+		#		self._data['id'] = self._response['stream_id']
+		#		return True
 
 		self._handle_request_status_code(r)
 
@@ -207,7 +216,7 @@ class Rule(MetaObjectAPI):
 	# @throw ValueError the given parameters are not valid
 	# @throw IOError HTTP code >= 500
 	# @return True if succeded
-	def delete():
+	def delete(self):
 		if self._data == None or 'id' not in self._data:
 			self.error_msg = "The object is empty: no id available."
 			raise ValueError
@@ -238,6 +247,14 @@ class Rule(MetaObjectAPI):
 	def find_by_id(self, id):
 		_url = "%s/streams/%s/rules/%s" % ( self._server.url, self._stream._data['id'], id)
 		return super(Rule, self).find_by_id("streams", id)
+
+	## Loads a stream from the server's database.
+	# @param stream the stream to find
+	# @throw ValueError the given stream is empty
+	# @throw IOError HTTP code != 200
+	# @return True if found and loaded
+	def load_from_server(self, id):
+		return super(Rule, self)._load_from_server("rules", id)
 
 class Alert_Receiver(MetaObjectAPI):
 

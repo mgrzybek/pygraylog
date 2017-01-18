@@ -22,6 +22,7 @@ class MetaRootAPI:
 		self._server = server
 		self.error_msg = ""
 		self._data = None
+		self._response = ""
 
 	def _handle_request_status_code(self, r):
 		if r.status_code >= 500:
@@ -96,10 +97,11 @@ class MetaObjectAPI(MetaRootAPI):
 		# TODO: get the id from the child object, "object + _id" does no longer work with users
 		if r.status_code == 201:
 			self._data = details
+			self._response = r.json()
+
 			return True
 
 		self._handle_request_status_code(r)
-
 		self._response = r.json()
 
 		return False
